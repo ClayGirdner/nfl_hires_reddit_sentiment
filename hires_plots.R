@@ -1,10 +1,9 @@
+library(nflscrapR)
 library(tidyverse)
 library(dplyr)
-library(ggimage)
 library(ggplot2)
+library(ggimage)
 library(ggrepel)
-library(nflscrapR)
-library(gridExtra)
 library(ggpubr)
 
 # Theme for plots
