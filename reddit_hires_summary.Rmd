@@ -3,7 +3,7 @@ title: "Court of Public Opinion: A Sentiment Analysis"
 subtitle: "Reddit’s collective reaction to Freddie Kitchens, Kevin Stefanski, and other recent NFL head coaching hires"
 author: "Clay Girdner"
 date: "2/14/2020"
-output: html_document
+output: pdf_document
 ---
 
 Hand up, this time last year I thought Freddie Kitchens was a good hire for the Cleveland Browns. The strong offensive finish to 2018 combined with Freddie’s seemingly close ties to Baker Mayfield had me convinced that Kitchens was the man for the job. I wasn’t about to let the fact that Freddie lacked any head coaching experience come between me and my delusions of Browns grandeur. I was hooked on recency bias, and it was a hell of a drug.
@@ -211,51 +211,11 @@ subreddit_plot
 As intuition would suggest, this analysis shows that team subreddits tend to be more optimistic about “their guy” than the generalists commenting on r/nfl. This is especially true regarding the r/browns thread for Kitchens which had a VADER polarity score well above its r/nfl counterpart, proving that I wasn’t the only Browns fan drinking the Kool-Aid. However, the same cannot be said for the Stefanski thread on r/browns with an average polarity nearly equal to r/nfl, suggesting that Browns fans are returning to their usual pessimistic demeanor. The last point to note from this plot is the r/nyjets reaction to the Adam Gase selection. Jets fans were not only more pessimistic than the community at large, but they generated the lowest VADER polarity score by a sizable margin. (Note that r/eagles was not represented in this analysis.)
 
 ## Word Composition: Kitchens vs Stefanski
-Lastly, I broke out the Kitchens and Stefanski discussions in order to compare the word composition between the two sets of comments. Here are wordclouds showing some of the most frequently used words from the Kitchens (orange) and Stefanski (brown) threads.
+Lastly, I broke out the Kitchens and Stefanski discussions in order to compare the word composition between the two sets of comments. Below are wordclouds showing some of the most frequently used words from the Kitchens (orange) and Stefanski (brown) threads.
 
-```{r wordclouds, echo=FALSE}
-# Import stop words to exclude in the word clouds (the, to, but, etc.)
-data("stop_words")
-# List of common words to drop from the word clouds
-drop_words = c("coach", "browns", "nfl", "hire", "https", "cleveland",
-               "game", "games", "season", "play", "head", "guy", "team", 
-               "fans", "fan", "lot", "gonna", "guys", "yeah", "people",
-               "freddie", "kitchens", "kitchen", "kevin", "stefanski",
-               "time", "vikings", "minnesota", "brownies", "top")
+![Kitchens](kitchens_cloud.png)
 
-# Break comments down into words
-# Combine "offensive" into "offense" same for "defensive"
-# Remove any words containing numbers or punctuation
-words <- comments %>%
-    unnest_tokens(word, body, strip_punct = TRUE) %>%
-    anti_join(stop_words, by="word") %>%
-    mutate(word = gsub("offensive", "offense", word)) %>%
-    mutate(word = gsub("defensive", "defense", word)) %>%
-    filter(nchar(word) > 2 & !grepl("[0-9]", word) &
-               !grepl("[[:punct:]]", word) & !grepl("’", word) &
-               !word %in% drop_words)
-
-# Split out words specific to Kitchens and Stefanski, count up word frequencies,
-# Create word clouds and save as images (save as HTML, then image)
-kitchens_words <- words %>%
-    filter(name == "Kitchens") %>%
-    count(word, sort = TRUE) %>%
-    mutate(n = n/sum(n)) 
-kitchens_cloud <- kitchens_words %>%
-    head(40) %>%
-    wordcloud2(color = "#fb4f14", backgroundColor = "#F0F0F0")
-
-stefanski_words <- words %>%
-    filter(name == "Stefanski") %>%
-    count(word, sort = TRUE) %>%
-    mutate(n = n/sum(n))
-stefanski_cloud <- stefanski_words %>%
-    head(40) %>%
-    wordcloud2(color = "#5c3920", backgroundColor = "#F0F0F0")
-
-kitchens_cloud
-stefanski_cloud
-```
+![Stefanski](stefanski_cloud.png)
 
 The word “baker” clearly sticks out when viewing the comment threads this way as it was heavily featured in the Kitchens discussion but barely mentioned in the Stefanski thread. In fact, Baker was mentioned nearly seven times more often when Freddie was hired! On the flip side, the word offense (or offensive) was mentioned more than twice as often in the Stefanski thread. I believe this is consistent with the narratives that Freddie was hired primarily due to his relationship with Mayfield and the other Browns players (word “players” 1.5x more often for Freddie) while Stefanski was hired for his ability to scheme up an offense and call plays.
 
