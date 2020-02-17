@@ -1,9 +1,9 @@
 ---
-title: "Court of Public Opinion: A Sentiment Analysis"
-subtitle: "Reddit’s collective reaction to Freddie Kitchens, Kevin Stefanski, and other recent NFL head coaching hires"
+title: 'Court of Public Opinion: A Sentiment Analysis'
 author: "Clay Girdner"
 date: "2/14/2020"
 output: pdf_document
+subtitle: Reddit’s collective reaction to Freddie Kitchens, Kevin Stefanski, and other recent NFL head coaching hires
 ---
 
 Hand up, this time last year I thought Freddie Kitchens was a good hire for the Cleveland Browns. The strong offensive finish to 2018 combined with Freddie’s seemingly close ties to Baker Mayfield had me convinced that Kitchens was the man for the job. I wasn’t about to let the fact that Freddie lacked any head coaching experience come between me and my delusions of Browns grandeur. I was hooked on recency bias, and it was a hell of a drug.
