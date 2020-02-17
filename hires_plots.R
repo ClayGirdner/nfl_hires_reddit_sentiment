@@ -18,32 +18,36 @@ lighten <- function(color, factor = 0.1) {
     col
 }
 
-# Import NFL logo URLs, sub Titans' for one with transparent background
-nfl_logos <- read_csv("https://raw.githubusercontent.com/statsbylopez/BlogPosts/master/nfl_teamlogos.csv")
-nfl_logos[nfl_logos$team_code == "TEN", "url"] <- "https://media.socastsrm.com/wordpress/wp-content/blogs.dir/258/files/2019/10/tennessee_titans_1999-pres.png"
-
 # Load in comment data (originally gathered with a Python script)
 comments <- read_csv("comments_data.csv")
 
-# Aggregate comments by coach and subreddit (nfl or team)
-# Compute counts and average scores for each polarity/subjectivity score
-# When averaging polarity scores, exclude scores equal to zero
-comments_agg <- comments %>%
-    group_by(name, team, subreddit) %>%
-    summarize(count = sum(!is.na(name)),
-              vader = mean(vader_compound[vader_compound != 0]),
-              blob = mean(blob_polarity[blob_polarity != 0]),
-              blob_subjectivity = mean(blob_subjectivity),
-              vader_subjectivity = mean(abs(vader_compound))) %>%
+# Import NFL logo URLs, sub Titans' for one with transparent background
+nfl_logos <- read_csv("https://raw.githubusercontent.com/ClayGirdner/nfl_hires_reddit_sentiment/master/nfl_team_logos.csv")
+
+# Join up the data sets
+comments <- comments %>%
     left_join(nfl_logos, by = c("team" = "team_code")) %>%
     left_join(nflteams, by = c("team" = "abbr"))
-    
 
-# Scatter plot featuring both polarity scores
-polarity_plot <- comments_agg %>%
+# Scatter plot of all 31k observations
+vader_textblob_scatter <- comments %>%
+    ggplot(aes(x = vader_compound, y = blob_polarity)) + 
+    geom_point(alpha = 0.1) +
+    geom_smooth(method = lm, size = 1.5) +
+    labs(x = "VADER Polarity",
+         y = "TextBlob Polarity") +
+    theme_pff
+ggsave("vader_textblob_scatter.png", dpi = 1200, height = 7, width = 7)
+
+
+# Polarity plot excluding neutral observations
+polarity_plot_exclude <- comments %>%
     filter(subreddit == "nfl") %>%
-    ggplot(aes(x = vader, y = blob)) +
-    geom_image(aes(image = url)) +
+    group_by(name, team, url.y, primary) %>%
+    summarize(vader_polarity = mean(vader_compound[vader_compound != 0]),
+              blob_polarity = mean(blob_polarity[blob_polarity != 0])) %>%
+    ggplot(aes(x = vader_polarity, y = blob_polarity)) +
+    geom_image(aes(image = url.y)) +
     geom_text_repel(aes(label = name,
                         color = primary),
                     point.padding = 0.5) +
@@ -51,18 +55,20 @@ polarity_plot <- comments_agg %>%
     labs(x = "Average VADER Polarity",
          y = "Average TextBlob Polarity",
          title = "Reddit Comment Polarity",
-         subtitle = "r/nfl hire threads",
+         subtitle = "r/nfl HC hiring threads since 2018",
          caption = "excludes neutral comments (polarity score = 0)") +
     theme_pff
-
 ggsave("nfl_polarity.png", dpi = 1200, height = 7, width = 7)
 
 
 # Scatter plot of both subjectivity scores
-subjectivity_plot <- comments_agg %>%
+subjectivity_plot <- comments %>%
     filter(subreddit == "nfl") %>%
+    group_by(name, team, url.y, primary) %>%
+    summarize(vader_subjectivity = mean(abs(vader_compound)),
+              blob_subjectivity = mean(blob_subjectivity)) %>%
     ggplot(aes(x = vader_subjectivity, y = blob_subjectivity)) +
-    geom_image(aes(image = url)) +
+    geom_image(aes(image = url.y)) +
     geom_text_repel(aes(label = name,
                         color = primary),
                     point.padding = 0.5) +
@@ -74,13 +80,15 @@ subjectivity_plot <- comments_agg %>%
     theme(plot.title = element_text(hjust = 0.5))
 
 # Total comments for each r/nfl thread
-count_plot <- comments_agg %>%
+count_plot <- comments %>%
     filter(subreddit == "nfl") %>%
+    group_by(name, team, url.y, primary) %>%
+    summarize(count = sum(!is.na(name))) %>%
     ggplot(aes(y = count, x = reorder(name, count))) +
     geom_col(aes(fill = lighten(primary)),
              color = "black") +
     scale_fill_identity() +
-    geom_image(aes(image = url,
+    geom_image(aes(image = url.y,
                    y = count + 175),
                size = 0.058) +
     geom_text(aes(label = name, 
@@ -92,7 +100,8 @@ count_plot <- comments_agg %>%
     coord_flip() +
     labs(x = NULL, 
          y = NULL,
-         title = "Comment Count") +
+         title = "Comment Count",
+         caption = "r/nfl comment threads since 2018") +
     theme_pff +
     theme(panel.grid.major.y = element_blank(),
           axis.text.y = element_blank(),
@@ -100,23 +109,27 @@ count_plot <- comments_agg %>%
 
 # Combining subjectivity and count plots side by side
 subjectivity_count_plot <- ggarrange(subjectivity_plot, count_plot,
-                                   ncol = 2, nrow = 1)
+                                     ncol = 2, nrow = 1)
 ggsave("nfl_subjectivity_count.png", dpi = 1200, height = 6, width = 9)
 
 # Plot showing the difference between VADER polarity scores in r/nfl and team
-# subreddits
-subreddit_plot <- comments_agg %>%
-    ggplot(aes(x = vader,
+# subreddits, first we need to aggregate the comments data though
+comments_subs <- comments %>%
+    group_by(name, team, subreddit, url.y, primary) %>%
+    summarize(vader_polarity = mean(vader_compound[vader_compound != 0]))
+
+subreddit_plot <- comments_subs %>%
+    ggplot(aes(x = vader_polarity,
                group = name,
-               y = reorder(name, vader))) +
+               y = reorder(name, vader_polarity))) +
     geom_line(aes(color = primary),
               size = 1) +
     scale_color_identity() +
-    geom_image(data = filter(comments_agg, subreddit == "nfl"),
+    geom_image(data = filter(comments_subs, subreddit == "nfl"),
                size = 0.045,
                image = "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/National_Football_League_logo.svg/1200px-National_Football_League_logo.svg.png") +
-    geom_image(data = filter(comments_agg, subreddit == "team"),
-               aes(image = url),
+    geom_image(data = filter(comments_subs, subreddit == "team"),
+               aes(image = url.y),
                size = 0.06) +
     labs(x = "Average VADER Polarity", 
          y = NULL,
