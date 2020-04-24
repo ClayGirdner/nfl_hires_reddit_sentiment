@@ -22,7 +22,7 @@ lighten <- function(color, factor = 0.1) {
 comments <- read_csv("comments_data.csv")
 
 # Import NFL logo URLs, sub Titans' for one with transparent background
-nfl_logos <- read_csv("https://raw.githubusercontent.com/ClayGirdner/nfl_hires_reddit_sentiment/master/nfl_team_logos.csv")
+nfl_logos <- read_csv("nfl_team_logos.csv")
 
 # Join up the data sets
 comments <- comments %>%
@@ -37,7 +37,7 @@ vader_textblob_scatter <- comments %>%
     labs(x = "VADER Polarity",
          y = "TextBlob Polarity") +
     theme_pff
-ggsave("vader_textblob_scatter.png", dpi = 1200, height = 7, width = 7)
+ggsave("vader_textblob_scatter.png", height = 7, width = 8)
 
 
 # Polarity plot excluding neutral observations
@@ -58,7 +58,7 @@ polarity_plot_exclude <- comments %>%
          subtitle = "r/nfl HC hiring threads since 2018",
          caption = "excludes neutral comments (polarity score = 0)") +
     theme_pff
-ggsave("nfl_polarity.png", dpi = 1200, height = 7, width = 7)
+ggsave("nfl_polarity.png", height = 7, width = 8)
 
 
 # Scatter plot of both subjectivity scores
@@ -110,7 +110,7 @@ count_plot <- comments %>%
 # Combining subjectivity and count plots side by side
 subjectivity_count_plot <- ggarrange(subjectivity_plot, count_plot,
                                      ncol = 2, nrow = 1)
-ggsave("nfl_subjectivity_count.png", dpi = 1200, height = 6, width = 9)
+ggsave("nfl_subjectivity_count.png", height = 6, width = 9)
 
 # Plot showing the difference between VADER polarity scores in r/nfl and team
 # subreddits, first we need to aggregate the comments data though
@@ -138,4 +138,4 @@ subreddit_plot <- comments_subs %>%
     theme_pff +
     theme(panel.grid.major.y = element_blank(),
           axis.text.y = element_text(size = 13))
-ggsave("subreddit_comp.png", dpi = 1200, height = 7, width = 7)
+ggsave("subreddit_comp.png", height = 7, width = 8)
